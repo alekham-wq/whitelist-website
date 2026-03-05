@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rubick AI | Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+.logo {
+    padding: 20px;
+    text-align: left;   /* important */
+}
+
+.main-logo {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.sub-logo {
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: #6c63ff;
+    font-weight: 600;
+    margin-top: 4px;
+
+    /* aligns under the R (skips rocket emoji space) */
+    padding-left: 40px;
+}
+:root{
+    --primary:#2563eb;
+    --primary-dark:#1e40af;
+    --bg:#f4f7fb;
+    --sidebar:#0f172a;
+    --card:#ffffff;
+    --text:#1e293b;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    display:flex;
+    background:var(--bg);
+}
+
+/* Sidebar */
+.sidebar{
+    width:260px;
+    height:100vh;
+    background:var(--sidebar);
+    color:white;
+    padding:25px;
+    position:fixed;
+}
+
+.logo{
+    font-size:22px;
+    font-weight:600;
+    margin-bottom:40px;
+}
+
+.menu li{
+    list-style:none;
+    padding:12px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:0.3s;
+}
+
+.menu li:hover{
+    background:#1e293b;
+}
+
+/* Main */
+.main{
+    margin-left:260px;
+    width:100%;
+    padding:30px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.topbar h1{
+    font-size:24px;
+    font-weight:600;
+}
+
+.search-box{
+    padding:10px 15px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    width:250px;
+}
+
+/* Cards */
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:20px;
+    margin-bottom:30px;
+}
+
+.card{
+    background:var(--card);
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+}
+
+.card h4{
+    color:gray;
+    font-size:14px;
+}
+
+.card p{
+    font-size:24px;
+    font-weight:600;
+    margin-top:5px;
+}
+
+/* Upload */
+.upload{
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    margin-bottom:30px;
+}
+
+/* ✅ NEW: force button to extreme right (creative, SaaS-like) */
+.upload-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.upload-row .drop-zone{
+    flex:1;
+    min-height:90px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* Keep your dropzone styles */
+.drop-zone{
+    border:2px dashed #cbd5e1;
+    padding:40px;
+    text-align:center;
+    border-radius:12px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.drop-zone.dragover{
+    border-color:var(--primary);
+    background:#eef2ff;
+}
+
+input[type=file]{ display:none; }
+
+.btn{
+    background:var(--primary);
+    color:white;
+    padding:12px 25px;
+    border:none;
+    border-radius:10px;
+    margin-top:20px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn:hover{
+    background:var(--primary-dark);
+}
+
+/* ✅ NEW: right-side “action button” style, without changing your class */
+.upload-row .btn{
+    margin-top:0;               /* remove old top margin */
+    height:56px;
+    padding:0 28px;
+    border-radius:14px;
+    font-weight:600;
+    letter-spacing:0.2px;
+    box-shadow:0 12px 22px rgba(37, 99, 235, 0.25);
+    white-space:nowrap;
+    margin-left:auto;           /* ✅ pushes button to the extreme RIGHT */
+}
+
+/* Progress */
+.progress-wrapper{
+    margin-top:20px;
+    display:none;
+}
+
+.progress-bar{
+    height:8px;
+    background:#e2e8f0;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+.progress{
+    height:100%;
+    width:0%;
+    background:var(--primary);
+    transition:0.3s;
+}
+
+/* Loader overlay */
+.loader-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+    display:none;
+}
+
+.spinner{
+    width:50px;
+    height:50px;
+    border:5px solid #ddd;
+    border-top:5px solid var(--primary);
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{ transform:rotate(360deg); }
+}
+
+/* Table */
+.table-container{
+    background:white;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    overflow:hidden;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:15px;
+    font-size:14px;
+}
+
+th{
+    background:#f1f5f9;
+    text-align:left;
+}
+
+tr:hover{
+    background:#f9fafb;
+}
+
+.badge{
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:500;
+}
+
+.processing{ background:#fef3c7; color:#92400e; }
+.completed{ background:#dcfce7; color:#166534; }
+.failed{ background:#fee2e2; color:#991b1b; }
+
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <div class="main-logo">🚀 Rubick AI</div>
+        <div class="sub-logo">Whitelist</div>
+    </div>
+    <ul class="menu">
+        <li>Dashboard</li>
+        <li>Orders</li>
+        <li>Analytics</li>
+        <li>Settings</li>
+    </ul>
+</div>
+
+<div class="main">
+
+<div class="topbar">
+    <h1>Orders Dashboard</h1>
+    <input type="text" placeholder="Search Orders..." class="search-box" onkeyup="filterTable(this.value)">
+</div>
+
+<div class="cards">
+    <div class="card">
+        <h4>Total Orders</h4>
+        <p id="totalOrders">0</p>
+    </div>
+    <div class="card">
+        <h4>Processing</h4>
+        <p id="processingCount">0</p>
+    </div>
+    <div class="card">
+        <h4>Completed</h4>
+        <p id="completedCount">0</p>
+    </div>
+    <div class="card">
+        <h4>Failed</h4>
+        <p id="failedCount">0</p>
+    </div>
+</div>
+
+<div class="upload">
+<form id="uploadForm" enctype="multipart/form-data">
+
+<!-- ✅ ONLY CHANGE: wrap dropzone + button -->
+<div class="upload-row">
+    <label class="drop-zone" id="dropZone">
+        <span id="uploadText">Drag & Drop Excel / ZIP files or Click to Upload</span>
+        <input type="file" id="fileInput" name="files" multiple>
+    </label>
+
+    <button class="btn" type="submit">Start Processing</button>
+</div>
+
+<div class="progress-wrapper" id="progressWrapper">
+<div class="progress-bar">
+<div class="progress" id="progressBar"></div>
+</div>
+</div>
+</form>
+</div>
+
+<div class="table-container">
+<table id="ordersTable">
+<thead>
+<tr>
+<th>File Name</th>
+<th>Type</th>
+<th>Status</th>
+<th>Uploaded At</th>
+<th>Download</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+</div>
+
+<div class="loader-overlay" id="loader">
+<div class="spinner"></div>
+</div>
+
+<script>
+const form = document.getElementById("uploadForm");
+const tableBody = document.querySelector("#ordersTable tbody");
+
+/* ✅ NEW: safer filename parsing (fixes greedy regex issues) */
+function getFilenameFromHeader(contentDisposition){
+    if(!contentDisposition) return "Processed_Output.xlsx";
+
+    const m1 = contentDisposition.match(/filename="([^"]+)"/i);
+    if(m1 && m1[1]) return m1[1];
+
+    const m2 = contentDisposition.match(/filename=([^;]+)/i);
+    if(m2 && m2[1]) return m2[1].trim();
+
+    return "Processed_Output.xlsx";
+}
+
+form.addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const files = document.getElementById("fileInput").files;
+    if(!files.length){
+        alert("Please upload file first");
+        return;
+    }
+
+    const formData = new FormData();
+
+    /* ✅ FIX: if file is ZIP => send as zip_file (backend expects this) */
+    for(let file of files){
+        if(file.name.toLowerCase().endsWith(".zip")){
+            formData.append("zip_file", file);
+        } else {
+            formData.append("files", file);
+        }
+    }
+
+    document.getElementById("loader").style.display="flex";
+    document.getElementById("progressWrapper").style.display="block";
+    document.getElementById("progressBar").style.width="30%";
+
+    try {
+
+        addRows(files,"Processing");
+
+        const response = await fetch("/process",{
+            method:"POST",
+            body:formData
+        });
+
+        document.getElementById("progressBar").style.width="80%";
+
+        if(!response.ok){
+            throw new Error("Processing failed");
+        }
+
+        const blob = await response.blob();
+
+        // ✅ FIX: Extract filename safely from header
+        const contentDisposition = response.headers.get("Content-Disposition");
+        let filename = getFilenameFromHeader(contentDisposition);
+
+        const url = window.URL.createObjectURL(blob);
+
+        // Auto download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        // ✅ attach correct download for ONLY the newly added rows (this submission)
+        const rows = Array.from(tableBody.rows);
+        const lastN = rows.slice(rows.length - files.length);
+
+        for (const r of lastN) {
+            r.dataset.downloadUrl = url;
+            r.dataset.downloadName = filename;
+
+            const btn = r.querySelector("button.btn");
+            if (btn) btn.disabled = false;
+        }
+
+        window.latestDownload = url;
+
+        document.getElementById("progressBar").style.width="100%";
+        updateStatus("Completed", files.length);
+
+    }catch(error){
+        console.error(error);
+        updateStatus("Failed", files.length);
+        alert("Processing failed");
+    }
+
+    document.getElementById("loader").style.display="none";
+});
+
+function addRows(files,status){
+    for(let file of files){
+        let row = tableBody.insertRow();
+        row.innerHTML=`
+        <td>${file.name}</td>
+        <td>${file.type || "ZIP"}</td>
+        <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
+        <td>${new Date().toLocaleString()}</td>
+        <td>
+            <button onclick="downloadRow(this)" class="btn" disabled>
+                Download
+            </button>
+        </td>
+        `;
+
+        // ✅ store initial placeholders for this row
+        row.dataset.downloadUrl = "";
+        row.dataset.downloadName = "";
+    }
+    updateStats();
+}
+
+function updateStatus(newStatus, filesCount){
+    const rows = Array.from(tableBody.rows);
+    const targetRows = rows.slice(rows.length - filesCount);
+
+    for(let row of targetRows){
+        let badge = row.cells[2].querySelector(".badge");
+        badge.className = "badge " + newStatus.toLowerCase();
+        badge.innerText = newStatus;
+    }
+    updateStats();
+}
+
+function updateStats(){
+    let total = tableBody.rows.length;
+    let processing=0,completed=0,failed=0;
+
+    for(let row of tableBody.rows){
+        let status = row.cells[2].innerText;
+        if(status==="Processing") processing++;
+        if(status==="Completed") completed++;
+        if(status==="Failed") failed++;
+    }
+
+    document.getElementById("totalOrders").innerText=total;
+    document.getElementById("processingCount").innerText=processing;
+    document.getElementById("completedCount").innerText=completed;
+    document.getElementById("failedCount").innerText=failed;
+}
+
+function filterTable(value){
+    let rows = tableBody.getElementsByTagName("tr");
+    for(let row of rows){
+        row.style.display = row.innerText.toLowerCase().includes(value.toLowerCase()) ? "" : "none";
+    }
+}
+
+function downloadRow(btn){
+    const row = btn.closest("tr");
+    const url = row.dataset.downloadUrl;
+    const name = row.dataset.downloadName || "Processed_Output.xlsx";
+
+    if(!url){
+        alert("No file available for this row yet.");
+        return;
+    }
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+const fileInput = document.getElementById("fileInput");
+const uploadText = document.getElementById("uploadText");
+
+fileInput.addEventListener("change", function(){
+    if(this.files.length === 1){
+        uploadText.innerText = this.files[0].name;
+    } else if(this.files.length > 1){
+        uploadText.innerText = this.files.length + " files selected";
+    }
+});
+</script>
+
+</body>
+</html>
