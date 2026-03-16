@@ -29,6 +29,7 @@ warnings.simplefilter("ignore")
 MAX_SIDE = 6000
 MAX_SIZE_KB = 800
 MAX_COLUMNS = 20
+VALID_IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".heif")
 
 os.makedirs("temp", exist_ok=True)
 
@@ -65,6 +66,21 @@ def _safe_download_base(name: str) -> str:
 
     return s
 
+def is_valid_image_file(filename):
+    if not filename:
+        return False
+
+    lower_name = filename.lower()
+
+    if lower_name == ".ds_store":
+        return False
+    if lower_name.startswith("._"):
+        return False
+    if lower_name.startswith("."):
+        return False
+
+    return lower_name.endswith(VALID_IMAGE_EXTS)
+
 def compress_image(img, output_path):
     clean_exif = {"0th": {}, "Exif": {}, "GPS": {}, "Interop": {}, "1st": {}, "thumbnail": None}
     exif_bytes = piexif.dump(clean_exif)
@@ -88,9 +104,20 @@ def convert_image(input_path, output_path):
         compress_image(img, output_path)
 
 def upload_folder_to_s3(local_folder, s3_prefix):
-    for root, _, files in os.walk(local_folder):
+    for root, dirs, files in os.walk(local_folder):
+        # Skip macOS metadata folders
+        dirs[:] = [d for d in dirs if d != "__MACOSX" and not d.startswith(".")]
+
         for file in files:
+            if not is_valid_image_file(file):
+                continue
+
             local_path = os.path.join(root, file)
+
+            # Skip empty files
+            if not os.path.isfile(local_path) or os.path.getsize(local_path) == 0:
+                continue
+
             relative_path = os.path.relpath(local_path, local_folder)
             s3_key = os.path.join(s3_prefix, relative_path).replace("\\", "/")
 
@@ -141,7 +168,13 @@ def process():
 
         base_url = f"{CLOUDFRONT_URL}/{s3_prefix}"
 
-        for root, _, files in os.walk(extract_dir):
+        for root, dirs, files in os.walk(extract_dir):
+            # Skip macOS metadata folders
+            dirs[:] = [d for d in dirs if d != "__MACOSX" and not d.startswith(".")]
+
+            # Keep only valid image files
+            files = [f for f in files if is_valid_image_file(f)]
+
             if not files:
                 continue
 
@@ -159,9 +192,9 @@ def process():
 
             for idx, file in enumerate(sorted(files)[:MAX_COLUMNS]):
                 if rel_path == ".":
-                    full_url = f"{base_url}/{quote(file)}"
+                    full_url = f"{base_url}/{quote(file, safe='')}"
                 else:
-                    full_url = f"{base_url}/{quote(rel_path)}/{quote(file)}"
+                    full_url = f"{base_url}/{quote(rel_path, safe='')}/{quote(file, safe='')}"
 
                 row_data[f"path {idx+1}"] = full_url
 
@@ -215,6 +248,9 @@ def process():
         tasks = []
         for root, _, files in os.walk(imgs_dir):
             for file in files:
+                if not is_valid_image_file(file):
+                    continue
+
                 input_path = os.path.join(root, file)
                 rel = os.path.relpath(input_path, imgs_dir)
                 output_path = os.path.join(imgs_final, os.path.splitext(rel)[0] + ".jpg")
@@ -232,6 +268,8 @@ def process():
         base_url = f"{CLOUDFRONT_URL}/{s3_prefix}"
 
         for root, _, files in os.walk(imgs_final):
+            files = [f for f in files if is_valid_image_file(f)]
+
             if not files:
                 continue
 
@@ -244,7 +282,7 @@ def process():
                 row_data[f"path {i}"] = ""
 
             for idx, file in enumerate(sorted(files)[:MAX_COLUMNS]):
-                full_url = f"{base_url}/{quote(rel_path)}/{quote(file)}"
+                full_url = f"{base_url}/{quote(rel_path, safe='')}/{quote(file, safe='')}"
                 row_data[f"path {idx+1}"] = full_url
 
             final_data.append(row_data)
